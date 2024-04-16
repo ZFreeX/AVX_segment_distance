@@ -2,7 +2,7 @@ load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
 
 cc_library(
     name = "segment",
-    hdrs = ["segment.h"],
+    hdrs = ["segment.h", "segment_asm.h"],
 )
 
 cc_test(

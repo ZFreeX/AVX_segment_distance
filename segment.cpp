@@ -1,4 +1,5 @@
 #include "segment.h"
+#include "segment_asm.h"
 #include <immintrin.h>
 #include <algorithm>
 #include <array>
