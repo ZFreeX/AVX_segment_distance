@@ -55,18 +55,6 @@ double dist_sqr (double x1, double y1, double x2, double y2){
     return (x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2);
 }
 
-//format: vectors [x1, y1, 0, 0], [x2, y2, 0, 0]
-//returns: vector where the first element is square of distance
-double dist_sqr (__m256d a, __m256d b) {
-    __m256d s = _mm256_sub_pd(a, b);
-    __m256d m = s;
-    a = _mm256_mul_pd(m, s);
-    b = a; 
-    __m256d res = _mm256_hadd_pd(a, b);
-    double* p = (double*)&res;
-    return *p;
-}
-
 double S (double a, double b, double c) {
     double p = (a + b + c) / 2;
     return sqrt(p * (p - a) * (p - b) * (p - c));
