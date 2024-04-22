@@ -16,6 +16,11 @@ cc_test(
     copts = [
         "-m64",
         "-mavx512f",
+        "-march=skylake-avx512",
+        "-mprefer-vector-width=512",     
+        "-masm=intel",
+        "-fverbose-asm", 
+        "-O3",
     ],
 )
 
