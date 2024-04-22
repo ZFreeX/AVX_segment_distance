@@ -63,7 +63,8 @@ bool intersec(__m256d a, __m256d b) {
 
   std::swap(ptr_ab[0], ptr_ab[3]);
   std::swap(ptr_ab[2], ptr_ab[1]);
-  _m256d new_ab_koef = _mm256_load_pd (ptr_ab);
+  auto new_ab_koef = _mm256_load_pd (ptr_ab);
+  //[b2,a2,b1,a1]
   
   
   //[x2,x1,x4,x3]
@@ -78,9 +79,19 @@ bool intersec(__m256d a, __m256d b) {
 
   //[c1,*,c2,*]
   auto c_koef = _mm256_hsub_pd (new_a, new_b);
+  _mm256_store_pd (ptr_ab, c_koef);
+  std::swap(ptr_ab[0], ptr_ab[2]);
+  //[c2,*,c1,*]
+  c_koef = _mm256_load_pd (ptr_ab);
+  c_koef = _mm256_permute_pd (c_koef, 0b11111111);
+  //[c2,c2,c1,c1]
 
   double* ptr_c[4];
   _mm256_store_pd (ptr_c, c_koef);
-
+  
+  auto ab_mul = _mm256_mul_pd (new_ab_koef, ab_koef);
+  //[a1*b2,b1*a2,a2*b1,b2*a1]
+  auto abc_mul = _mm256_mul_pd (c_koef, ab_koef);
+  //[a1*c2,b1*c2,a2*c1,b2*c1]
   if ()
 }
