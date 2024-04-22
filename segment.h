@@ -3,7 +3,7 @@
 #include <iomanip>
 #include <algorithm>
 #include <vector>
-#include <immintrin.h>
+
 
 using namespace std;
 
@@ -17,6 +17,11 @@ bool intersec (long long x1, long long y1, long long x2, long long y2, long long
     /// line
     long long a1 = y2 - y1, b1 = x1 - x2, c1 = y1 * x2 - y2 * x1;
     long long a2 = y4 - y3, b2 = x3 - x4, c2 = y3 * x4 - y4 * x3;
+
+    //making vector [y2, x1, y4, x3]
+    //making vector [y1, x2, y3, x4]
+    //sub = calculating a1, a2, b1, b2
+
     if (a1 * b2 == a2 * b1 && a1 * c2 == a2 * c1 && b1 * c2 == b2 * c1) {
         /// [x1, x2] [x3, x4]
         vector <pair <int, int>> X;
