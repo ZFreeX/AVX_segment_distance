@@ -2,9 +2,7 @@
 #include <utility>
 #include <array>
 #include <cmath>
-#include <fstream>
-
-std::ofstream fout("out.txt");
+#include <iostream>
 
 bool comp (double a, double b) {
   return a < b || abs(a - b) < (1e-9);
@@ -48,11 +46,11 @@ double max_x(__m256d a) {
 }
 
 //swap 2 packed segments
-void swap(__m256d &a, __m256d &b) {
-  __m256d c = a;
-  a = b;
-  b = c;
-}
+// void swap(__m256d &a, __m256d &b) {
+//   __m256d c = a;
+//   a = b;
+//   b = c;
+// }
 
 //1-2 = a segment = [x1, y1, x2, y2]
 //3-4 = b segment = [x3, y3, x4, y4]
@@ -60,7 +58,7 @@ bool intersec(__m256d a, __m256d b) {
   __m256d save1, save2, save3;
 
   if (min_x(a) > min_x(b)) {
-    swap(a, b);
+    std::swap(a, b);
   }
   double ptr_a[4], ptr_b[4];
   _mm256_store_pd (ptr_a, a);
@@ -107,8 +105,8 @@ bool intersec(__m256d a, __m256d b) {
   std::swap(ptr_a[3], ptr_b[2]);
   new_a = _mm256_load_pd (ptr_a);
   new_b = _mm256_load_pd (ptr_b);
-  new_a = _mm256_permute_pd(new_a, 0b11000011);
-  new_b = _mm256_permute_pd(new_b, 0b11000011);
+  new_a = _mm256_permute_pd(new_a, 0b0000'1'0'0'1);
+  new_b = _mm256_permute_pd(new_b, 0b0000'1'0'0'1);
   //[x2,x1,x4,x3]
   //[y1,y2,y3,y4]
 
@@ -121,19 +119,19 @@ bool intersec(__m256d a, __m256d b) {
   std::swap(ptr_ab[0], ptr_ab[2]);
   //[c2,*,c1,*]
   c_koef = _mm256_load_pd (ptr_ab);
-  c_koef = _mm256_permute_pd (c_koef, 0b11111111);
+  c_koef = _mm256_permute_pd (c_koef, 0b0000'1111);
   //[c2,c2,c1,c1]
   
   auto ab_mul = _mm256_mul_pd (new_ab_koef, ab_koef);
   //[a1*b2,b1*a2,b2*a1,a2*b1]
-  ab_mul = _mm256_permute_pd(ab_mul, 0b11000011);
+  ab_mul = _mm256_permute_pd(ab_mul, 0b0000'1'0'0'1);
   //[a1*b2,b1*a2,a2*b1,b2*a1]
   save3 = ab_mul;
   _mm256_store_pd (ptr_ab, ab_mul);
   //[a1,b1,b2,a2]-ab_koef
   auto abc_mul = _mm256_mul_pd (c_koef, ab_koef);
   //[a1*c2,b1*c2,b2*c1,a2*c1]
-  abc_mul = _mm256_permute_pd(abc_mul, 0b11000011);
+  abc_mul = _mm256_permute_pd(abc_mul, 0b0000'1'0'0'1);
   //[a1*c2,b1*c2,a2*c1,b2*c1]
   save1 = abc_mul;
   double ptr[4];
@@ -142,7 +140,7 @@ bool intersec(__m256d a, __m256d b) {
   abc_mul = _mm256_load_pd (ptr);
   save2 = abc_mul;
   //[a2*c1,b2*c1,a1*c2,b1*c2]
-  auto for_cmp_c = _mm256_permute_pd (abc_mul, 0b00110011);
+  auto for_cmp_c = _mm256_permute_pd (abc_mul, 0b0000'0'1'0'1);
   _mm256_store_pd (ptr, _mm256_cmp_pd (for_cmp_c, abc_mul, 0));
   //[2nd_cmp,3rd_cmp,2nd_cmp,3rd_cmp]
   if (ptr_ab[0] == ptr_ab[2] && ptr[0] && ptr[1]) {
@@ -170,7 +168,7 @@ bool intersec(__m256d a, __m256d b) {
     //save1-[a1*c2,b1*c2,a2*c1,b2*c1]
     //save2-[a2*c1,b2*c1,a1*c2,b1*c2]
     //save3-[a1*b2,b1*a2,a2*b1,b2*a1]
-    save3 = _mm256_permute_pd (save3, 0b00111100);
+    save3 = _mm256_permute_pd (save3, 0b0000'0'1'1'0);
     //save3-[b1*a2,a1*b2,a2*b1,b2*a1]
     save3 = _mm256_hsub_pd (save3, save1);
     //save3-[*,a1*b2-b1*a2,*,a1*b2-a2*b1]
@@ -205,12 +203,12 @@ double dist (__m256d point, __m256d seg) {
     else {
       auto subs = _mm256_sub_pd(rev_seg, seg);
       //[fx-sx, fy-sy, sx-fx, sy-fy]
-      auto changed_point = _mm256_permute_pd(point, 0b00110011);
+      auto changed_point = _mm256_permute_pd(point, 0b0000'0'1'0'1);
       //[y,x,y,x]
       subs = _mm256_mul_pd(subs, changed_point);
       //[y(fx-sx), x(fy-sy), y(sx-fx), x(sy-fy)]
 
-      auto rez = _mm256_permute_pd(seg, 0b11000011);
+      auto rez = _mm256_permute_pd(seg, 0b0000'1'0'0'1);
       //[sx,sy,fy,fx]
       rez = _mm256_mul_pd (rez, rev_seg);
       //[sx*fx,sy*fy,fy*sx,fx*sy]
@@ -230,7 +228,6 @@ double dist (__m256d point, __m256d seg) {
 //3-4 = b segment = [x3, y3, x4, y4]
 double seg_distance(__m256d a, __m256d b) {
   if (intersec(a, b)) {
-    fout << "HEREEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE";
     return 0.;
   } else {
           double ans = 1e10;

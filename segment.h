@@ -60,11 +60,6 @@ double dist_sqr (double x1, double y1, double x2, double y2){
     return (x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2);
 }
 
-double S (double a, double b, double c) {
-    double p = (a + b + c) / 2;
-    return sqrt(p * (p - a) * (p - b) * (p - c));
-}
-
 double dist (double x, double y, double sx, double sy, double fx, double fy) {
     double la = dist_sqr(x, y, sx, sy), lb = dist_sqr(x, y, fx, fy), lc = dist_sqr(sx, sy, fx, fy);
     if (lb > la + lc) {
