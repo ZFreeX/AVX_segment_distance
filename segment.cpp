@@ -26,12 +26,12 @@ using Catch::Matchers::RangeEquals;
 
 TEST_CASE("Single_distance") {
      REQUIRE(seg_distance(1LL, 1LL, 2LL, 2LL, 2LL, 1LL, 3LL, 0LL) == Catch::Approx(0.70710678118654752));
-     
+     REQUIRE(seg_distance(_mm256_setr_pd(1., 1., 2., 2.), _mm256_setr_pd(2., 1., 3., 0.)) == Catch::Approx(0.70710678118654752));
 }
 
 TEST_CASE("Dist_sqr_test") {
      __m256d vec1 = _mm256_setr_pd(4.0, 5.0, 0., 0.);
-    __m256d vec2 = _mm256_setr_pd(9.0, 3.0, 0., 0.);
+     __m256d vec2 = _mm256_setr_pd(9.0, 3.0, 0., 0.);
 
     REQUIRE(dist_sqr(vec1, vec2) == Catch::Approx(29));
 }
