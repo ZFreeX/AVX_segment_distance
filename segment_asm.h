@@ -136,14 +136,17 @@ bool intersec(__m256d a, __m256d b) {
   //[a1*c2,b1*c2,a2*c1,b2*c1]
   save1 = abc_mul;
 
-//тут погибла рота солдат
 
   double ptr[4];
   _mm256_store_pd (ptr, abc_mul);
   std::swap(ptr[1], ptr[3]);
+  std::swap(ptr[0], ptr[2]);
   abc_mul = _mm256_load_pd (ptr);
   save2 = abc_mul;
   //[a2*c1,b2*c1,a1*c2,b1*c2]
+  
+  
+  
 
   std::swap(ptr[0], ptr[2]);
   std::swap(ptr[1], ptr[3]);
@@ -185,18 +188,32 @@ bool intersec(__m256d a, __m256d b) {
         return (ptr_a[0] <= ptr_b[2] && ptr_a[2] >= ptr_b[0] && ptr_a[1] <= ptr_b[3] && ptr_a[3] >= ptr_b[1]);
   } else if (ptr_ab[0] == ptr_ab[2] && !ptr[0] && !ptr[1]) {
     return false;
-  } else {
+  } else { 
+//тут погибла рота солдат
     double ptr[4];
     //save1-[a1*c2,b1*c2,a2*c1,b2*c1]
     //save2-[a2*c1,b2*c1,a1*c2,b1*c2]
     //save3-[a1*b2,b1*a2,a2*b1,b2*a1]
-    save3 = _mm256_permute_pd (save3, 0b0000'0'1'1'0);
+    save3 = _mm256_permute_pd (save3, 0b0000'1001);
     //save3-[b1*a2,a1*b2,a2*b1,b2*a1]
-    save3 = _mm256_hsub_pd (save3, save1);
+    save3 = _mm256_hsub_pd (save1, save3);
+    //save3-[*,b1*a2-a1*b2,*,a2*b1-a1*b2]
+    save3 = _mm256_mul_pd(save3, _mm256_setr_pd(-1., -1., -1., -1.));
     //save3-[*,a1*b2-b1*a2,*,a1*b2-a2*b1]
+    save3 = _mm256_permute_pd (save3, 0b0000'1111);
+    //save3-[a1*b2-b1*a2,a1*b2-b1*a2,a1*b2-a2*b1,a1*b2-a2*b1]
+
+    double ptr_check[4];
+    std::cerr << "asm: ";
+    _mm256_store_pd (ptr_check, save2);
+    for (int i = 0; i < 4; i++) {
+      std::cerr << ptr_check[i] << ' ';
+    }
+    std::cerr << '\n';
 
     auto rez = _mm256_sub_pd (save1, save2);
     //rez-[*,b1*c2-b2*c1,a2*c1-a1*c2,*]
+
     rez = _mm256_div_pd(rez, save3);
     //rez-[*,x,y,*]
     _mm256_store_pd (ptr, rez);
@@ -225,12 +242,12 @@ double dist (__m256d point, __m256d seg) {
     else {
       auto subs = _mm256_sub_pd(rev_seg, seg);
       //[fx-sx, fy-sy, sx-fx, sy-fy]
-      auto changed_point = _mm256_permute_pd(point, 0b0000'0'1'0'1);
+      auto changed_point = _mm256_permute_pd(point, 0b0000'0101);
       //[y,x,y,x]
       subs = _mm256_mul_pd(subs, changed_point);
       //[y(fx-sx), x(fy-sy), y(sx-fx), x(sy-fy)]
 
-      auto rez = _mm256_permute_pd(seg, 0b0000'1'0'0'1);
+      auto rez = _mm256_permute_pd(seg, 0b0000'0110);
       //[sx,sy,fy,fx]
       rez = _mm256_mul_pd (rez, rev_seg);
       //[sx*fx,sy*fy,fy*sx,fx*sy]
@@ -241,6 +258,151 @@ double dist (__m256d point, __m256d seg) {
       return std::abs((ptr_rez[3] - ptr_rez[2] + ptr2[1] + ptr2[2])) / std::sqrt(lc);
     }
 }
+
+
+
+//1-2 = a segment = [x1, y1, x2, y2]
+//3-4 = b segment = [x3, y3, x4, y4]
+vector<int> debugasm(__m256d a, __m256d b) {
+  __m256d save1, save2, save3;
+	
+  if (min_x(a) > min_x(b)) {
+    swap(a, b);
+  }
+  double ptr_a[4], ptr_b[4];
+  _mm256_store_pd (ptr_a, a);
+  _mm256_store_pd (ptr_b, b);
+
+  //1
+  std::swap(ptr_a[0], ptr_a[3]);
+  std::swap(ptr_a[2], ptr_b[0]);
+  //1-2 = a segment = [y2, y1, x3, x1]
+  //3-4 = b segment = [x2, y3, x4, y4]
+
+  //2
+  std::swap(ptr_a[1], ptr_b[3]);
+  std::swap(ptr_b[0], ptr_b[2]);
+  //1-2 = a segment = [y2, y4, x3, x1]
+  //3-4 = b segment = [x4, y3, x2, y1]
+
+  //3
+  std::swap(ptr_a[1], ptr_a[3]);
+  std::swap(ptr_b[0], ptr_b[3]);
+  std::swap(ptr_b[1], ptr_b[2]);
+  std::swap(ptr_b[2], ptr_b[3]);
+  //1-2 = a segment = [y2, x1, x3, y4]
+  //3-4 = b segment = [y1, x2, x4, y3]  
+
+  __m256d new_a = _mm256_load_pd (ptr_a);
+  __m256d new_b = _mm256_load_pd (ptr_b);
+
+  //[a1,b1,b2,a2]
+  auto ab_koef = _mm256_sub_pd (new_a, new_b);
+  double ptr_ab[4];
+  _mm256_store_pd (ptr_ab, ab_koef);
+  
+
+  std::swap(ptr_ab[0], ptr_ab[2]);
+  std::swap(ptr_ab[1], ptr_ab[3]);
+  std::swap(ptr_ab[2], ptr_ab[3]);
+  auto new_ab_koef = _mm256_load_pd (ptr_ab);
+  //[b2,a2,a1,b1]
+  std::swap(ptr_a[0], ptr_b[1]);
+  std::swap(ptr_a[3], ptr_b[2]);
+  new_a = _mm256_load_pd (ptr_a);
+  new_b = _mm256_load_pd (ptr_b);
+  new_a = _mm256_permute_pd(new_a, 0b0000'0110);
+  new_b = _mm256_permute_pd(new_b, 0b0000'0110);
+  //[x2,x1,x4,x3]
+  //[y1,y2,y3,y4]
+
+  new_a = _mm256_mul_pd (new_a, new_b);
+  //[x2*y1,x1*y2,x4*y3,x3*y4]
+  
+  
+  auto c_koef = _mm256_hsub_pd (new_a, new_b);
+  //[c1,*,c2,*]
+  _mm256_store_pd (ptr_ab, c_koef);
+  std::swap(ptr_ab[0], ptr_ab[2]);
+  //[c2,*,c1,*]
+  c_koef = _mm256_load_pd (ptr_ab);
+  c_koef = _mm256_permute_pd (c_koef, 0b0000'0000);
+  //[c2,c2,c1,c1]
+  auto ab_mul = _mm256_mul_pd (new_ab_koef, ab_koef);
+  //[a1*b2,b1*a2,b2*a1,a2*b1]
+  ab_mul = _mm256_permute_pd(ab_mul, 0b0000'0110);
+  //[a1*b2,b1*a2,a2*b1,b2*a1]
+  save3 = ab_mul;
+  _mm256_store_pd (ptr_ab, ab_mul);
+  //[a1,b1,b2,a2]-ab_koef
+  auto abc_mul = _mm256_mul_pd (c_koef, ab_koef);
+  //[a1*c2,b1*c2,b2*c1,a2*c1]
+  abc_mul = _mm256_permute_pd(abc_mul, 0b0000'0110);
+  //[a1*c2,b1*c2,a2*c1,b2*c1]
+  save1 = abc_mul;
+  
+  double ptr[4];
+  _mm256_store_pd (ptr, abc_mul);
+  std::swap(ptr[1], ptr[3]);
+  std::swap(ptr[0], ptr[2]);
+  abc_mul = _mm256_load_pd (ptr);
+  save2 = abc_mul;
+  //[a2*c1,b2*c1,a1*c2,b1*c2]
+
+  std::swap(ptr[0], ptr[2]);
+  std::swap(ptr[1], ptr[3]);
+  //[a1*c2,b1*c2,a2*c1,b2*c1]
+
+  auto for_cmp_c = _mm256_load_pd (ptr);
+  _mm256_store_pd (ptr, _mm256_cmp_pd (for_cmp_c, abc_mul, 0));
+  //[2nd_cmp,3rd_cmp,2nd_cmp,3rd_cmp]
+  
+  std::swap(ptr[0], ptr[2]);
+  std::swap(ptr[1], ptr[3]);
+  //[a1*c2,b1*c2,a2*c1,b2*c1]
+  vector<int> res(8);
+  
+  if (ptr_ab[0] == ptr_ab[1] && ptr[0] && ptr[1]) {
+        _mm256_store_pd (ptr_a, a);
+        _mm256_store_pd (ptr_b, b);
+        if (ptr_a[1] > ptr_a[3]) {
+          std::swap(ptr_a[1], ptr_a[3]);
+        }
+
+        if (ptr_b[1] > ptr_b[3]) {
+          std::swap(ptr_b[1], ptr_b[3]);
+        }
+
+        if (ptr_a[0] > ptr_a[2]) {
+          std::swap(ptr_a[0], ptr_a[2]);
+        }
+
+        if (ptr_b[0] > ptr_b[2]) {
+          std::swap(ptr_b[0], ptr_b[2]);
+        }
+
+        if (ptr_a[0] > ptr_b[0]) {
+          std::swap(ptr_a[0], ptr_b[0]);
+          std::swap(ptr_a[2], ptr_b[2]);
+        }
+
+        if (ptr_a[1] > ptr_b[1]) {
+          std::swap(ptr_a[1], ptr_b[1]);
+          std::swap(ptr_a[3], ptr_b[3]);
+        }
+	for (int i = 0; i < 4; i++) {
+		res[i] = static_cast<int>(ptr_a[i]);
+		res[i + 4] = static_cast<int>(ptr_b[i]);
+	}
+  //      return (ptr_a[0] <= ptr_b[2] && ptr_a[2] >= ptr_b[0] && ptr_a[1] <= ptr_b[3] && ptr_a[3] >= ptr_b[1]);
+  }
+  
+  for (int i = 0; i < 4; i++) {
+  	res[i] = save1[i];
+  } 
+  return res;
+  }
+
 
 //1-2 = a segment = [x1, y1, x2, y2]
 //3-4 = b segment = [x3, y3, x4, y4]

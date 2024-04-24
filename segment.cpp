@@ -16,6 +16,7 @@
 #include <numeric>
 #include <random>
 #include <ranges>
+#include <chrono>
 #include <string>
 #include <tuple>
 #include <type_traits>
@@ -28,6 +29,56 @@ TEST_CASE("Single_distance") {
      REQUIRE(seg_distance(1LL, 1LL, 2LL, 2LL, 2LL, 1LL, 3LL, 0LL) == Catch::Approx(0.70710678118654752));
      //REQUIRE(seg_distance(_mm256_setr_pd(1., 1., 2., 2.), _mm256_setr_pd(2., 1., 3., 0.)) == Catch::Approx(0.70710678118654752));
 }
+
+
+void CheckEquals(vector<int>& l, const auto& expected) {
+    REQUIRE(l.size() == expected.size());
+    CHECK_THAT(l, RangeEquals(expected));
+}
+	
+
+
+/*
+TEST_CASE("Intersec part test") {
+     //__m256d vec1 = _mm256_setr_pd(4.0, 5.0, 0., 0.);
+     //__m256d vec2 = _mm256_setr_pd(9.0, 3.0, 0., 0.);
+    //swap(vec1, vec2);
+    auto a = debugcpp(2LL, 2LL, 4LL, 4LL, 5LL, 5LL, 6LL, 6LL);
+    auto b = debugasm(_mm256_setr_pd(2., 2., 4., 4.), _mm256_setr_pd(5., 5., 6., 6.));
+    CheckEquals(a, b);
+} */
+
+TEST_CASE("Intersec group test") {
+	bool r1 = intersec(_mm256_setr_pd(2., 2., 4., 4.), _mm256_setr_pd(5., 5., 6., 6.));
+	bool r2 = intersec(2, 2, 4, 4, 5, 5, 6, 6);
+	CHECK(r1 == r2);
+	r1 = intersec(_mm256_setr_pd(2., 2., 4., 2.), _mm256_setr_pd(4., 2., 2., 2.));
+	r2 = intersec(2, 2, 4, 2, 4, 2, 2, 2);
+	CHECK(r1 == r2);
+}
+
+
+TEST_CASE("Random dist test group") {
+	const int lim = 100;
+	mt19937 rng(chrono::steady_clock::now().time_since_epoch().count());
+	for (int i = 0; i < 100; i++) {
+		vector<int> x(4);
+		vector<int> y(4);
+		//point - x1, y1
+		//seg - [x2, y2, x3, y3]
+		for (auto&e :x) {
+			e = rng() % lim - 5;
+		}
+		for (auto&e :y) {
+			e = rng() % lim - 5;
+		}
+		
+		REQUIRE(dist(_mm256_setr_pd(x[0], y[0], x[0], y[0]), _mm256_setr_pd(x[1], y[1], x[2], y[2])) == Catch::Approx(dist(x[0], y[0], x[1], y[1], x[2], y[2])));
+	}
+
+}
+
+
 
 TEST_CASE("Dist_sqr_test") {
      {

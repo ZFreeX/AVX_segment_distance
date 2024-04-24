@@ -9,6 +9,75 @@ using namespace std;
 
 bool comp (long double a, long double b) { return a < b || abs(a - b) < (1e-9); }
 
+vector<int> debugcpp(long long x1, long long y1, long long x2, long long y2, long long x3, long long y3, long long x4, long long y4) {
+    if (min(x1, x2) > min(x3, x4)) {
+        swap(x1, x3); swap(x2, x4);
+        swap(y1, y3); swap(y2, y4);
+    }
+    /// line
+    
+    long long a1 = y2 - y1, b1 = x1 - x2, c1 = y1 * x2 - y2 * x1;
+    long long a2 = y4 - y3, b2 = x3 - x4, c2 = y3 * x4 - y4 * x3;
+    vector<int> res(8);
+    res[0] = a1 + a2 + c1 + c2 + b1 + b2;
+    res[0] = a1*c2;
+    res[1] = b1*c2;
+    res[2] = a2*c1;
+    res[3] = b2*c1;
+    //a1*c2,b1*c2,a2*c1,b2*c1
+    if (a1 * b2 == a2 * b1 && a1 * c2 == a2 * c1 && b1 * c2 == b2 * c1) {
+        /// [x1, x2] [x3, x4]
+        if (y1 > y2) {
+        	swap(y1, y2);
+        }
+        if (y3 > y4) {
+        	swap(y3, y4);
+        }
+        
+        if (x1 > x2) {
+        	swap(x1, x2);
+        }
+        if (x3 > x4) {
+        	swap(x3, x4);
+        }
+        if (x1 > x3) {
+        	swap(x1, x3);
+        	swap(x2, x4);
+        	
+        }
+        if (y1 > y3) {
+        	swap(y1, y3);
+        	swap(y2, y4);
+        }
+        res = {x1, y1, x2, y2, x3, y3, x4, y4};
+        return res;
+        
+    }
+    else if (a1 * b2 == a2 * b1 && a1 * c2 != a2 * c1 && b1 * c2 != b2 * c1) {
+    	res[0] = 101;
+        return res;
+    }
+    else {
+    	res[0] = 102;
+        long double x = (long double)(b1 * c2 - b2 * c1) / (long double)(a1 * b2 - a2 * b1);
+        long double y = (long double)(a2 * c1 - a1 * c2) / (long double)(a1 * b2 - a2 * b1);
+        if (comp(min(x1, x2), x) && comp(x, max(x1, x2)) && comp(min(x3, x4), x) && comp(x, max(x3, x4)) &&
+            comp(min(y1, y2), y) && comp(y, max(y1, y2)) && comp(min(y3, y4), y) && comp(y, max(y3, y4))) {
+            return res;
+        }
+        else {
+            return res;
+        }
+    }
+    
+    
+    
+    
+    return res;
+}
+
+
+
 bool intersec (long long x1, long long y1, long long x2, long long y2, long long x3, long long y3, long long x4, long long y4) {
     if (min(x1, x2) > min(x3, x4)) {
         swap(x1, x3); swap(x2, x4);
