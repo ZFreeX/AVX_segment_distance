@@ -27,7 +27,7 @@ using Catch::Matchers::RangeEquals;
 
 TEST_CASE("Single_distance") {
      REQUIRE(seg_distance(1LL, 1LL, 2LL, 2LL, 2LL, 1LL, 3LL, 0LL) == Catch::Approx(0.70710678118654752));
-     //REQUIRE(seg_distance(_mm256_setr_pd(1., 1., 2., 2.), _mm256_setr_pd(2., 1., 3., 0.)) == Catch::Approx(0.70710678118654752));
+     REQUIRE(seg_distance(_mm256_setr_pd(1., 1., 2., 2.), _mm256_setr_pd(2., 1., 3., 0.)) == Catch::Approx(0.70710678118654752));
 }
 
 
