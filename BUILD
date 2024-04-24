@@ -11,16 +11,14 @@ cc_test(
     srcs = ["bench.cpp"],
     deps = [
         ":segment",
-        "//tools/bazel:catch2",
+        "@catch2//:catch2_main",
     ],
+    linkstatic=True,
     copts = [
-        "-m64",
-        "-mavx512f",
-        "-march=skylake-avx512",
-        "-mprefer-vector-width=512",     
-        "-masm=intel",
-        "-fverbose-asm", 
-        "-O3",
+         "-m64",
+        "-mavx2",
+        "-mfma",
+        "-O3"
     ],
 )
 
@@ -30,10 +28,13 @@ cc_test(
     srcs = ["segment.cpp"],
     deps = [
         ":segment",
-        "//tools/bazel:catch2",
+        "@catch2//:catch2_main",
     ],
+    linkstatic=True,
     copts = [
-        "-m64",
-        "-mavx512f",
+         "-m64",
+        "-mavx2",
+        "-mfma",
+        "-O3"
     ],
 )

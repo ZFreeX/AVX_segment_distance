@@ -4,10 +4,6 @@
 #include <iostream>
 #include <utility>
 
-// bool comp(double a, double b) {
-//     return a < b || abs(a - b) < (1e-9);
-// }
-
 // format: vectors [x1, y1, *, *], [x2, y2, *, *]
 // returns: vector where the first element is square of distance
 double dist_sqr(__m256d a, __m256d b) {
@@ -44,13 +40,6 @@ double max_x(__m256d a) {
     _mm256_store_pd(ptr, a);
     return std::max(ptr[0], ptr[2]);
 }
-
-// swap 2 packed segments
-//  void swap(__m256d &a, __m256d &b) {
-//    __m256d c = a;
-//    a = b;
-//    b = c;
-//  }
 
 // 1-2 = a segment = [x1, y1, x2, y2]
 // 3-4 = b segment = [x3, y3, x4, y4]
