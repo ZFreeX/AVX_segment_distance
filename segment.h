@@ -24,21 +24,30 @@ bool intersec (long long x1, long long y1, long long x2, long long y2, long long
 
     if (a1 * b2 == a2 * b1 && a1 * c2 == a2 * c1 && b1 * c2 == b2 * c1) {
         /// [x1, x2] [x3, x4]
-        vector <pair <int, int>> X;
-        X.push_back({min(x1, x2), max(x1, x2)});
-        X.push_back({min(x3, x4), max(x3, x4)});
-
-        vector <pair <int, int>> Y;
-        Y.push_back({min(y1, y2), max(y1, y2)});
-        Y.push_back({min(y3, y4), max(y3, y4)});
-
-        sort(X.begin(), X.end()); sort(Y.begin(), Y.end());
-        if (X[0].second >= X[1].first && Y[0].second >= Y[1].first) {
-            return true;
+        if (y1 > y2) {
+          swap(y1, y2);
         }
-        else {
-            return false;
+        if (y3 > y4) {
+          swap(y3, y4);
         }
+        
+        if (x1 > x2) {
+          swap(x1, x2);
+        }
+        if (x3 > x4) {
+          swap(x3, x4);
+        }
+        if (x1 > x3) {
+          swap(x1, x3);
+          swap(x2, x4);
+          
+        }
+        if (y1 > y3) {
+          swap(y1, y3);
+          swap(y2, y4);
+        }
+        
+        return (x1 <= x4 && x2 >= x3 && y1 <= y4 && y2 >= y3);
     }
     else if (a1 * b2 == a2 * b1 && a1 * c2 != a2 * c1 && b1 * c2 != b2 * c1) {
         return false;

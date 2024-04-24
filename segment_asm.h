@@ -95,7 +95,6 @@ bool intersec(__m256d a, __m256d b) {
 
   std::swap(ptr_ab[0], ptr_ab[2]);
   std::swap(ptr_ab[1], ptr_ab[3]);
-  //std::swap(ptr_ab[2], ptr_ab[3]);
   auto new_ab_koef = _mm256_load_pd (ptr_ab);
   //[b2,a2,a1,b1]
   
@@ -103,64 +102,87 @@ bool intersec(__m256d a, __m256d b) {
   
   std::swap(ptr_a[0], ptr_b[1]);
   std::swap(ptr_a[3], ptr_b[2]);
+  //[x2, x1, x3, x4]
+  //[y1, y2, y4, y3]
   new_a = _mm256_load_pd (ptr_a);
   new_b = _mm256_load_pd (ptr_b);
-  new_a = _mm256_permute_pd(new_a, 0b0000'1'0'0'1);
-  new_b = _mm256_permute_pd(new_b, 0b0000'1'0'0'1);
+  new_a = _mm256_permute_pd(new_a, 0b0000'0110);
+  new_b = _mm256_permute_pd(new_b, 0b0000'0110);
   //[x2,x1,x4,x3]
   //[y1,y2,y3,y4]
 
   new_a = _mm256_mul_pd (new_a, new_b);
   //[x2*y1,x1*y2,x4*y3,x3*y4]
 
-  auto c_koef = _mm256_hsub_pd (new_b, new_a);
+  auto c_koef = _mm256_hsub_pd (new_a, new_b);
   //[c1,*,c2,*]
   _mm256_store_pd (ptr_ab, c_koef);
   std::swap(ptr_ab[0], ptr_ab[2]);
   //[c2,*,c1,*]
   c_koef = _mm256_load_pd (ptr_ab);
-  c_koef = _mm256_permute_pd (c_koef, 0b0000'1111);
+  c_koef = _mm256_permute_pd (c_koef, 0b0000'0000);
   //[c2,c2,c1,c1]
   
   auto ab_mul = _mm256_mul_pd (new_ab_koef, ab_koef);
   //[a1*b2,b1*a2,b2*a1,a2*b1]
-  ab_mul = _mm256_permute_pd(ab_mul, 0b0000'1'0'0'1);
+  ab_mul = _mm256_permute_pd(ab_mul, 0b0000'0110);
   //[a1*b2,b1*a2,a2*b1,b2*a1]
   save3 = ab_mul;
   _mm256_store_pd (ptr_ab, ab_mul);
   //[a1,b1,b2,a2]-ab_koef
   auto abc_mul = _mm256_mul_pd (c_koef, ab_koef);
   //[a1*c2,b1*c2,b2*c1,a2*c1]
-  abc_mul = _mm256_permute_pd(abc_mul, 0b0000'1'0'0'1);
+  abc_mul = _mm256_permute_pd(abc_mul, 0b0000'0110);
   //[a1*c2,b1*c2,a2*c1,b2*c1]
   save1 = abc_mul;
+
+//тут погибла рота солдат
+
   double ptr[4];
   _mm256_store_pd (ptr, abc_mul);
   std::swap(ptr[1], ptr[3]);
   abc_mul = _mm256_load_pd (ptr);
   save2 = abc_mul;
   //[a2*c1,b2*c1,a1*c2,b1*c2]
-  auto for_cmp_c = _mm256_permute_pd (abc_mul, 0b0000'0'1'0'1);
+
+  std::swap(ptr[0], ptr[2]);
+  std::swap(ptr[1], ptr[3]);
+  //[a1*c2,b1*c2,a2*c1,b2*c1]
+
+  auto for_cmp_c = _mm256_load_pd (ptr);
   _mm256_store_pd (ptr, _mm256_cmp_pd (for_cmp_c, abc_mul, 0));
+  //
   //[2nd_cmp,3rd_cmp,2nd_cmp,3rd_cmp]
-  if (ptr_ab[0] == ptr_ab[2] && ptr[0] && ptr[1]) {
+  if (ptr_ab[0] == ptr_ab[1] && ptr[0] && ptr[1]) {
         _mm256_store_pd (ptr_a, a);
         _mm256_store_pd (ptr_b, b);
-        std::array <std::pair <int, int>, 2> X;
-        X[0] = {std::min(ptr_a[0], ptr_a[2]), std::max(ptr_a[0], ptr_a[2])};
-        X[1] = {std::min(ptr_b[0], ptr_b[2]), std::max(ptr_b[0], ptr_b[2])};
-
-        std::array <std::pair <int, int>, 2> Y;
-        Y[0] = {std::min(ptr_a[1], ptr_a[3]), std::max(ptr_a[1], ptr_a[3])};
-        Y[1] = {std::min(ptr_b[1], ptr_b[3]), std::max(ptr_b[1], ptr_b[3])};
-
-        std::sort(X.begin(), X.end()); std::sort(Y.begin(), Y.end());
-        if (X[0].second >= X[1].first && Y[0].second >= Y[1].first) {
-            return true;
+        if (ptr_a[1] > ptr_a[3]) {
+          std::swap(ptr_a[1], ptr_a[3]);
         }
-        else {
-            return false;
+
+        if (ptr_b[1] > ptr_b[3]) {
+          std::swap(ptr_b[1], ptr_b[3]);
         }
+
+        if (ptr_a[0] > ptr_a[2]) {
+          std::swap(ptr_a[0], ptr_a[2]);
+        }
+
+        if (ptr_b[0] > ptr_b[2]) {
+          std::swap(ptr_b[0], ptr_b[2]);
+        }
+
+        if (ptr_a[0] > ptr_b[0]) {
+          std::swap(ptr_a[0], ptr_b[0]);
+          std::swap(ptr_a[2], ptr_b[2]);
+        }
+
+        if (ptr_a[1] > ptr_b[1]) {
+          std::swap(ptr_a[1], ptr_b[1]);
+          std::swap(ptr_a[3], ptr_b[3]);
+        }
+
+        return (ptr_a[0] <= ptr_b[2] && ptr_a[2] >= ptr_b[0] && ptr_a[1] <= ptr_b[3] && ptr_a[3] >= ptr_b[1]);
   } else if (ptr_ab[0] == ptr_ab[2] && !ptr[0] && !ptr[1]) {
     return false;
   } else {
@@ -195,10 +217,10 @@ double dist (__m256d point, __m256d seg) {
     //[fx,fy,sx,sy]
     double la = dist_sqr(point, seg), lb = dist_sqr(point, rev_seg), lc = dist_sqr(seg, rev_seg);
     if (lb > la + lc) {
-        return std::sqrt(la);
+      return std::sqrt(la);
     }
     else if (la > lb + lc) {
-        return std::sqrt(lb);
+      return std::sqrt(lb);
     }
     else {
       auto subs = _mm256_sub_pd(rev_seg, seg);
@@ -212,15 +234,11 @@ double dist (__m256d point, __m256d seg) {
       //[sx,sy,fy,fx]
       rez = _mm256_mul_pd (rez, rev_seg);
       //[sx*fx,sy*fy,fy*sx,fx*sy]
-      rez = _mm256_hsub_pd (rez, rez);
-      //[sy*fy-sx*fx, sy*fy-sx*fx, fx*sy-fy*sx, fx*sy-fy*sx]
-      rez = _mm256_add_pd(rez, subs);
-      //[sy*fy-sx*fx + y(fx-sx), sy*fy-sx*fx + x(fy-sy), fx*sy-fy*sx + y(sx-fx), fx*sy-fy*sx + x(sy-fy)]
-      double ptr[4];
-      _mm256_store_pd (ptr, rez);
+      double ptr_rez[4];
+      _mm256_store_pd (ptr_rez, rez);
       double ptr2[4];
       _mm256_store_pd (ptr2, subs);
-      return std::abs((ptr[2] + ptr2[3])) / std::sqrt(lc);
+      return std::abs((ptr_rez[3] - ptr_rez[2] + ptr2[1] + ptr2[2])) / std::sqrt(lc);
     }
 }
 

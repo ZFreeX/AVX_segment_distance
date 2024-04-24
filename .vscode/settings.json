@@ -47,6 +47,7 @@
         "variant": "cpp",
         "__config": "cpp",
         "__split_buffer": "cpp",
-        "ios": "cpp"
+        "ios": "cpp",
+        "charconv": "cpp"
     }
 }
